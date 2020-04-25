@@ -1,6 +1,11 @@
 import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from '../_services/auth.service';
 import { AlertifyService } from '../_services/alertify.service';
+import { FormGroup, FormControl, Validators, FormBuilder } from '@angular/forms';
+import { BsDatepickerConfig } from 'ngx-bootstrap';
+import { User } from '../_models/user';
+
 
 @Component({
   selector: 'app-register',
@@ -10,22 +15,66 @@ import { AlertifyService } from '../_services/alertify.service';
 export class RegisterComponent implements OnInit {
 
   @Output() cancelRegister = new EventEmitter();
-  model: any = {};
+  // model: any = {};
+  user: User;
+  registerForm: FormGroup;
+  bsConfig: Partial<BsDatepickerConfig>;
 
-  constructor(private authService: AuthService, private alertfy: AlertifyService) { }
+  constructor(private authService: AuthService,
+              private router: Router,
+              private alertfy: AlertifyService,
+              private fb: FormBuilder) { }
 
   ngOnInit() {
+    // this.registerForm = new FormGroup({
+    //   username: new FormControl('', Validators.required),
+    //   password: new FormControl('',
+    //     [Validators.required, Validators.minLength(4), Validators.maxLength(8)]),
+    //   confirmPassword: new FormControl('', Validators.required)
+    // }, this.passwordMatchValidator);
+    this.bsConfig = {
+      containerClass: 'theme-red'
+    };
+    this.createRegisterForm();
+  }
+
+  createRegisterForm() {
+    this.registerForm = this.fb.group({
+      gender: ['male'],
+      username: ['', Validators.required],
+      knownAs: ['', Validators.required],
+      dateOfBirth: [null, Validators.required],
+      city: ['', Validators.required],
+      country: ['', Validators.required],
+      password: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(8)]],
+      confirmPassword: ['', Validators.required]
+    }, {validator: this.passwordMatchValidator});
+  }
+
+  passwordMatchValidator(fg: FormGroup) {
+    return fg.get('password').value === fg.get('confirmPassword').value ? null : {mismatch: true};
   }
 
   register() {
-    this.authService.register(this.model).subscribe(() => {
-      this.alertfy.success('Registration Successful');
+    if (this.registerForm.valid) {
+      this.user = Object.assign({}, this.registerForm.value);
+      this.authService.register(this.user).subscribe(() => {
+        this.alertfy.success('Registration Successful');
       }, error => {
         this.alertfy.error(error);
-      }
-    );
-
-  }
+      }, () => {
+        this.authService.login(this.user).subscribe(() => {
+          this.router.navigate(['/members']);
+        });
+      });
+    }
+    // this.authService.register(this.model).subscribe(() => {
+    //   this.alertfy.success('Registration Successful');
+    //   }, error => {
+    //     this.alertfy.error(error);
+    //   }
+    // );
+   }
 
   cancel() {
   this.cancelRegister.emit(false);
