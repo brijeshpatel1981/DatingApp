@@ -30,19 +30,19 @@ pagination: Pagination;
 
   pageChanged(event: any): void {
     this.pagination.currentPage = event.page;
-    this.loadusers();
+    this.loadUsers();
   }
 
   reserFilters() {
     this.userParams.gender = this.user.gender === 'female' ? 'male' : 'female';
     this.userParams.minAge = 18;
     this.userParams.maxAge = 99;
-    this.userParams.orderBy = "lastActive";
+    this.userParams.orderBy = 'lastActive';
 
-    this.loadusers();
+    this.loadUsers();
   }
 
-  loadusers() {
+  loadUsers() {
     this.userService.getUsers(this.pagination.currentPage, this.pagination.itemsPerPage, this.userParams)
     .subscribe((res: PaginatedResults<User[]>) => {
       this.users = res.results;
